@@ -145,6 +145,22 @@ class CompleteTextExtractor:
         self.fitz_doc = fitz.open(pdf_path)
         self.plumber_doc = pdfplumber.open(pdf_path)
 
+    @staticmethod
+    def clean_text(text: str) -> str:
+        """Clean extracted text by normalizing whitespace"""
+        # Replace multiple newlines with single newline
+        text = re.sub(r'\n\s*\n', '\n\n', text)
+        # Replace single newlines within paragraphs with space (but keep double newlines)
+        lines = text.split('\n\n')
+        cleaned_lines = []
+        for line in lines:
+            # Remove single newlines within a paragraph
+            cleaned = ' '.join(line.split('\n'))
+            # Normalize multiple spaces to single space
+            cleaned = re.sub(r'\s+', ' ', cleaned)
+            cleaned_lines.append(cleaned.strip())
+        return '\n\n'.join(cleaned_lines)
+
     def extract_all(self) -> List[PageInfo]:
         """Extract complete content from all pages"""
         pages_info = []
@@ -166,13 +182,13 @@ class CompleteTextExtractor:
 
         # Extract text
         if page_type == "electronic":
-            content = fitz_page.get_text()
+            content = self.clean_text(fitz_page.get_text())
         else:
             # Scanned page - use OCR if available
             if HAS_AI_FEATURES:
-                content = self._ocr_page(fitz_page)
+                content = self.clean_text(self._ocr_page(fitz_page))
             else:
-                content = fitz_page.get_text()  # Fallback
+                content = self.clean_text(fitz_page.get_text())  # Fallback
 
         # Extract tables
         tables = plumber_page.extract_tables() or []
