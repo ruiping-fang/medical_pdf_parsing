@@ -1,5 +1,6 @@
-# Claude Code
-.claude/
+# Claude Code - 排除大部分配置，但保留 skills
+.claude/*
+!.claude/skills/
 
 # macOS
 .DS_Store
